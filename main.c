@@ -9,9 +9,11 @@
 #include "main.h"
 #include "window.h"
 #include "file.h"
+#include "bouton.h"
 #include "log.h"
 
 #define log 0
+#define debug 1
 
 #if log
 #define LOG(fmt, ...) \
@@ -38,6 +40,7 @@ Pos exMousePose;
 IPos exScreenPose;
 
 int nbPrintf = 0;
+int nbCollider = 0;
 
 char text[256];
 
@@ -47,8 +50,16 @@ struct color * bleu;
 struct color * vert;
 struct color * rouge;
 
+MouseCollideBox * collideBoxSpells[10];
+
 int main(int argc, char ** argv) {
 	StartLog();
+
+	for (int i = 0; i < 10; i++) {
+		collideBoxSpells[i] = NULL;
+	}
+
+	newCollideBox(collideBoxSpells, 10, 0, 10, 100, 30, Overed, NotOvered, Clicked);
 
 	//FILE * spellSGL = OpenFile("spells/spell.json", "a"); if (spellSGL == NULL) { printf("%s\n", sqlLikeGetErreur()); }
 	//listConst[] = NewNoeud("               \0", 0b000 000 0 0, 0b000 000 0 0, "               \0", "               \0", "               \0", "               \0", "               \0");
@@ -119,6 +130,7 @@ int main(int argc, char ** argv) {
 
 	windoweGame = NewWindow("Game", -1, -1, 1920, 1080, 0, 0);
 	windoweSpell = NewWindow("Spell", 0, 0, 960, 540, SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_SKIP_TASKBAR, 0);
+	SDL_HideWindow(windoweGame->window);
 	
 	mousePos.x = -1; mousePos.y = -1;
 	camera.x = 0; camera.y = 0;
@@ -210,6 +222,21 @@ int main(int argc, char ** argv) {
         	        case SDL_MOUSEMOTION:
         		        mousePos.x = events.motion.x;
         		        mousePos.y = events.motion.y;
+				for (int i = 0; i < 10; i++) {
+					if (collideBoxSpells[i] != NULL) {
+						if (collideBoxSpells[i]->start.x <= mousePos.x && collideBoxSpells[i]->end.x >= mousePos.x && collideBoxSpells[i]->start.y <= mousePos.y && collideBoxSpells[i]->end.y >= mousePos.y) {
+							if (!collideBoxSpells[i]->wasOver) {
+								collideBoxSpells[i]->wasOver = true;
+								collideBoxSpells[i]->whenOver();
+							}
+						} else {
+							if (collideBoxSpells[i]->wasOver) {
+								collideBoxSpells[i]->wasOver = false;
+								collideBoxSpells[i]->whenNotOver();
+							}
+						}
+					}
+				}
 				needToDraw = true;
         		        break;
 			
@@ -229,6 +256,13 @@ int main(int argc, char ** argv) {
 				} else if (events.window.windowID == windoweSpell->id) {
 					if (events.button.button == 1) {
 						moveScreen = false;
+						for (int i = 0; i < 10; i++) {
+							if (collideBoxSpells[i] != NULL) {
+								if (collideBoxSpells[i]->start.x <= mousePos.x && collideBoxSpells[i]->end.x >= mousePos.x && collideBoxSpells[i]->start.y <= mousePos.y && collideBoxSpells[i]->end.y >= mousePos.y) {
+									collideBoxSpells[i]->whenCollide();
+								}
+							}
+						}
 					}
 				}
 				break;
@@ -249,15 +283,64 @@ int main(int argc, char ** argv) {
         	}
         }
 
+	for (int i = 0; i < 10; i++) {
+		if (collideBoxSpells[i] != NULL) {
+			free(collideBoxSpells[i]);
+			collideBoxSpells[i] = NULL;
+		}
+	}
+
 	freeCategory(categories);
         CloseWindows();
 	EndLog();
         return 0;
 }
 
+MouseCollideBox * newCollideBox(MouseCollideBox * ColliderArray[], int nbColliderinArray, float x, float y, float w, float h, void (*whenOver)(), void (*whenNotOver)(), void (*whenCollide)()) {
+	MouseCollideBox * result = (MouseCollideBox *) malloc(sizeof(MouseCollideBox));
+	result->start.x = x;
+	result->start.y = y;
+	result->end.x = x + w;
+	result->end.y = y + h;
+	result->wasOver = false;
+	result->whenOver = whenOver;
+	result->whenNotOver = whenNotOver;
+	result->whenCollide = whenCollide;
+	result->ID = nbCollider;
+	nbCollider++;
+
+	for (int i = 0; i < nbColliderinArray; i++) {
+		if (collideBoxSpells[i] == NULL) {
+			collideBoxSpells[i] = result;
+			return result;
+		}
+	}
+	free(result);
+	LOG("ColliderArray est plein\n\0");
+	return NULL;
+}
+
+void Clicked() {
+	printf("Clicked\n");
+}
+
+void Overed() {
+	printf("Over\n");
+}
+
+void NotOvered() {
+	printf("NotOver\n");
+}
+
 void draw() {
 	ChangeColorC(windoweSpell, blanc);
-	DrawRectangle(windoweSpell, 0, 0, windoweSpell->w, windoweSpell->h, false, 0);
+	#if debug
+	for (int i = 0; i < 10; i++) {
+		if (collideBoxSpells[i] != NULL) {
+			DrawRectangle(windoweSpell, collideBoxSpells[i]->start.x, collideBoxSpells[i]->start.y, collideBoxSpells[i]->end.x - collideBoxSpells[i]->start.x, collideBoxSpells[i]->end.y - collideBoxSpells[i]->start.y, false, 0);
+		}
+	}
+	#endif
 }
 
 noeud * NewNoeud(const char name[16], unsigned char nbIn, unsigned char nbout, ...) {

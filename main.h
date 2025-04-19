@@ -83,6 +83,7 @@ typedef struct Sort {
 
 noeud * NewNoeud(const char name[16], unsigned char nbIn, unsigned char nbout, ...);
 category * NewCategory(const char name[16], Uint32 nbElement, noeud * Elements[]);
+
 void draw();
 void freeNoeud(noeud * noeuds);
 void freeCategory(category * categories);
