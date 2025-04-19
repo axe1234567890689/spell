@@ -11,9 +11,9 @@
 #include "file.h"
 #include "log.h"
 
-#define DEBUG 1
+#define log 0
 
-#if DEBUG
+#if log
 #define LOG(fmt, ...) \
 	do { snprintf(text, 256, fmt, ##__VA_ARGS__); WriteLogln(text); } while (0)
 #else
@@ -23,7 +23,7 @@
 
 //cd C:\Users\axel\Desktop\c
 //chcp 65001
-//gcc src\test\spell\* -o bin\spell -lws2_32 -I include -L lib -lmingw32 -lSDL2main -lSDL2_test -lSDL2
+//gcc src\test\spell\*.c src\test\spell\*.h -o bin\spell -lws2_32 -I include -L lib -lmingw32 -lSDL2main -lSDL2_test -lSDL2
 //printf("ligne : %d\ndans le fichier : %s\n", __LINE__, __FILE__);
 
 window * windoweGame;
@@ -53,39 +53,70 @@ int main(int argc, char ** argv) {
 	//FILE * spellSGL = OpenFile("spells/spell.json", "a"); if (spellSGL == NULL) { printf("%s\n", sqlLikeGetErreur()); }
 	//listConst[] = NewNoeud("               \0", 0b000 000 0 0, 0b000 000 0 0, "               \0", "               \0", "               \0", "               \0", "               \0");
 
-	noeud * listConst[9];
-	listConst[0] = NewNoeud("Color          \0", 0b10000000, 0b00000001, "Red            \0", "Green          \0", "Blue           \0", "Alpha          \0", "Color          \0");
-	listConst[1] = NewNoeud("Int            \0", 0b00000100, 0b00100000, "Float          \0", "Int            \0");
-	listConst[2] = NewNoeud("Float          \0", 0b00100000, 0b00000100, "Int            \0", "Float          \0");
-	listConst[3] = NewNoeud("Position       \0", 0b00001000, 0b00000010, "X              \0", "Y              \0", "Position       \0");
-	listConst[4] = NewNoeud("Random         \0", 0b00000000, 0b00000100, "Float          \0");
+	noeud * listConst[16];
+	listConst[0]  = NewNoeud("Color          \0", 0b10000000, 0b00000001, "Red            \0", "Green          \0", "Blue           \0", "Alpha          \0", "Color          \0");
+	listConst[1]  = NewNoeud("Int            \0", 0b00000100, 0b00100000, "Float          \0", "Int            \0");
+	listConst[2]  = NewNoeud("Float          \0", 0b00100000, 0b00000100, "Int            \0", "Float          \0");
+	listConst[3]  = NewNoeud("Position       \0", 0b00001000, 0b00000010, "X              \0", "Y              \0", "Position       \0");
+	listConst[4]  = NewNoeud("Random         \0", 0b00000000, 0b00000100, "Float          \0");
 	category * categories = NewCategory("Constante      \0", 5, listConst);
-	listConst[0] = NewNoeud("Touche Player  \0", 0b00000000, 0b10000011, "PV             \0", "Mana           \0", "ID             \0", "ID Team        \0", "Position       \0", "Color          \0");
-	listConst[1] = NewNoeud("Touche         \0", 0b00000000, 0b00100000, "Material       \0");
-	listConst[2] = NewNoeud("Position       \0", 0b00000000, 0b00000000);
-	listConst[3] = NewNoeud("Distance       \0", 0b00000000, 0b00000000);
-	listConst[4] = NewNoeud("Mana Lost      \0", 0b00000100, 0b00000100, "Mana Limit     \0", "Mana Remaning  \0");
-	listConst[5] = NewNoeud("mana Stored    \0", 0b00000100, 0b00000100, "Mana Déclencher\0", "Mana Stored    \0");
-	listConst[6] = NewNoeud("New Color      \0", 0b00000000, 0b00000001, "Color          \0");
+	listConst[0]  = NewNoeud("Touche Player  \0", 0b00000000, 0b10000011, "PV             \0", "Mana           \0", "ID             \0", "ID Team        \0", "Position       \0", "Color          \0");
+	listConst[1]  = NewNoeud("0Touche         \0", 0b00000000, 0b00100000, "Material       \0");
+	listConst[2]  = NewNoeud("Position       \0", 0b00000000, 0b00000000);
+	listConst[3]  = NewNoeud("Distance       \0", 0b00100000, 0b00000000, "Distance Max   \0");
+	listConst[4]  = NewNoeud("Mana Lost      \0", 0b00000100, 0b00000100, "Mana Limit     \0", "Mana Remaning  \0");
+	listConst[5]  = NewNoeud("mana Stored    \0", 0b00000100, 0b00000100, "Mana Déclencher\0", "Mana Stored    \0");
+	listConst[6]  = NewNoeud("New Color      \0", 0b00000000, 0b00000001, "Color          \0");
 	categories->suivant = NewCategory("Déclencheur    \0", 7, listConst);
-	listConst[0] = NewNoeud("egal           \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
-	listConst[1] = NewNoeud("plus petit que \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
-	listConst[2] = NewNoeud("plus grand que \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
-	listConst[3] = NewNoeud("<=             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
-	listConst[4] = NewNoeud(">=             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
-	listConst[5] = NewNoeud("inverte        \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
-	listConst[6] = NewNoeud("et             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
-	listConst[7] = NewNoeud("ou             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
-	listConst[8] = NewNoeud("wait next tick \0", 0b00100000, 0b00000000, "nb ticks       \0");
+	listConst[0]  = NewNoeud("==             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
+	listConst[1]  = NewNoeud("<              \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
+	listConst[2]  = NewNoeud(">              \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
+	listConst[3]  = NewNoeud("<=             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
+	listConst[4]  = NewNoeud(">=             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
+	listConst[5]  = NewNoeud("inverte        \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
+	listConst[6]  = NewNoeud("et             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
+	listConst[7]  = NewNoeud("ou             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
+	listConst[8]  = NewNoeud("wait n    tick \0", 0b00100000, 0b00000000, "nb ticks       \0");
 	categories->suivant->suivant = NewCategory("Condition      \0", 9, listConst);
+	listConst[0]  = NewNoeud("Position       \0", 0b00000000, 0b00000010, "Position       \0");
+	listConst[1]  = NewNoeud("Color          \0", 0b00000000, 0b00000001, "Color          \0");
+	listConst[2]  = NewNoeud("Vitesse        \0", 0b00000000, 0b00000100, "Vitesse        \0");
+	listConst[3]  = NewNoeud("Acceleration   \0", 0b00000000, 0b00000100, "Acceleration   \0");
+	listConst[4]  = NewNoeud("Direction      \0", 0b00000000, 0b00001000, "Yaw            \0", "Pitch          \0");
+	listConst[5]  = NewNoeud("Player Around  \0", 0b01000000, 0b00100000, "Next Player    \0", "Player id      \0");
+	listConst[6]  = NewNoeud("Get Player     \0", 0b00100000, 0b00100000, "Player id      \0", "Player id      \0");
+	listConst[7]  = NewNoeud("Caster         \0", 0b00000000, 0b00100000, "Player id      \0");
+	listConst[8]  = NewNoeud("Attention?     \0", 0b00000000, 0b00000000);
+	listConst[9]  = NewNoeud("Spell Around   \0", 0b01000000, 0b00100000, "Check Spell    \0", "Next Spell     \0", "Spell id       \0");
+	listConst[10] = NewNoeud("Angle To       \0", 0b00000010, 0b00001000, "Position To    \0", "Yaw            \0", "Pitch          \0");
+	listConst[11] = NewNoeud("Donne?         \0", 0b01000000, 0b00000000, "Data           \0", "ID             \0", "?              \0");
+	listConst[12] = NewNoeud("Get Messages   \0", 0b00100000, 0b00100000, "Next Message   \0", "Message        \0");
+	listConst[13] = NewNoeud("Get Value      \0", 0b00100000, 0b00100111, "Index          \0", "Int            \0", "Float          \0", "Position       \0", "Color          \0");
+	listConst[14] = NewNoeud("ID             \0", 0b00000000, 0b00100000, "ID             \0");
+	categories->suivant->suivant->suivant = NewCategory("Input          \0", 15, listConst);
+	listConst[0]  = NewNoeud("Pos   ->  Float\0", 0b00000010, 0b00001000, "Position       \0", "X              \0", "Y              \0");
+	listConst[1]  = NewNoeud("Float ->    Pos\0", 0b00001000, 0b00000010, "X              \0", "Y              \0", "Position       \0");
+	listConst[2]  = NewNoeud("Float ->    Int\0", 0b00000100, 0b00100000, "A Virgulr      \0", "Sans Virgule   \0");
+	listConst[3]  = NewNoeud("Int   ->  Float\0", 0b00100000, 0b00000100, "Sans Virgule   \0", "A Virgule      \0");
+	listConst[4]  = NewNoeud("Pos   ->  Angle\0", 0b00000010, 0b00101000, "Position       \0", "Distance       \0", "Yaw            \0", "Pitch          \0");
+	listConst[5]  = NewNoeud("Angle ->    Pos\0", 0b00001000, 0b00000010, "Yaw            \0", "Pitch          \0", "Distance       \0");
+	categories->suivant->suivant->suivant->suivant = NewCategory("Transform      \0", 6, listConst);
+	listConst[0]  = NewNoeud("Aller en       \0", 0b00000010, 0b00000000, "Position       \0");
+	listConst[1]  = NewNoeud("Vitesse Max    \0", 0b00100000, 0b00000000, "Vitesse Max    \0");
+	listConst[2]  = NewNoeud("Target         \0", 0b00000010, 0b00000000, "Player Position\0");
+	listConst[3]  = NewNoeud("Explosion      \0", 0b00000100, 0b00000000, "Intensité      \0");
+	listConst[4]  = NewNoeud("Température    \0", 0b00100000, 0b00000000, "°C             \0");
+	listConst[5]  = NewNoeud("Rayon Détection\0", 0b00001000, 0b00000000, "Rayon Player   \0", "Rayon Spell    \0");
+	listConst[6]  = NewNoeud("Direction      \0", 0b00001000, 0b00000000, "Yaw            \0", "Pitch          \0");
+	listConst[7]  = NewNoeud("Send Message   \0", 0b01000000, 0b00000000, "Spell ID       \0", "Message        \0");
+	listConst[8]  = NewNoeud("Rayon          \0", 0b00000100, 0b00000000, "Rayon          \0");
+	listConst[9]  = NewNoeud("Masse          \0", 0b00000100, 0b00000000, "Masse          \0");
+	listConst[10] = NewNoeud("Tick Per s     \0", 0b00100000, 0b00000000, "Tick Per s     \0");
+	listConst[11] = NewNoeud("Check Spell    \0", 0b00000000, 0b00100000, "nb Spell       \0");
+	listConst[12] = NewNoeud("Check Player   \0", 0b00000000, 0b00000000, "nb Player      \0");
+	listConst[13] = NewNoeud("Stock Value    \0", 0b01000111, 0b00000000, "index          \0", "Int            \0", "Float          \0", "Position       \0", "Color          \0");
+	categories->suivant->suivant->suivant->suivant = NewCategory("Effet          \0", 14, listConst);
 
-	printCategorie(categories);
-	freeCategory(categories);
-
-	EndLog();
-	
-	return 0;
-	
 	windoweGame = NewWindow("Game", -1, -1, 1920, 1080, 0, 0);
 	windoweSpell = NewWindow("Spell", 0, 0, 960, 540, SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_SKIP_TASKBAR, 0);
 	
@@ -218,6 +249,7 @@ int main(int argc, char ** argv) {
         	}
         }
 
+	freeCategory(categories);
         CloseWindows();
 	EndLog();
         return 0;
@@ -233,7 +265,7 @@ noeud * NewNoeud(const char name[16], unsigned char nbIn, unsigned char nbout, .
 	va_start(args, nbout);
 
 	noeud * result = (noeud *) malloc(sizeof(noeud));
-	LOG("%08X\0", result);
+	LOG("%08X \0", result);
 	strncpy(result->name, name, 15);
 	result->name[15] = '\0';
 	result->nbIn = nbIn;
@@ -269,7 +301,7 @@ noeud * NewNoeud(const char name[16], unsigned char nbIn, unsigned char nbout, .
 }
 
 category * NewCategory(const char name[16], Uint32 nbElement, noeud * Elements[]) {
-	category * result = (category *) malloc(sizeof(category));
+	category * result = (category *) malloc(sizeof(category) + nbElement * sizeof(noeud *));
 	LOG("┌────────────────────────────────────────────────────────────────────┐ \0");
 	LOG("│                              %08X                              │ \0", result);
 	LOG("└────────────────────────────────────────────────────────────────────┘ \0");
@@ -317,17 +349,14 @@ void printCategorie(category * categories) {
 		printff(text);
 		snprintf(text, 128, "├─ %d noeuds\n\0", current->nbElement);
 		printff(text);
-		for (int i = 0; i < current->nbElement - 1; i++) {
+		for (int i = 0; i < current->nbElement; i++) {
 			if (current->elements[i] == NULL) {
-				LOG("current->elements[%d] est NULL\n \0", i);
+				LOG("current->elements[%d] est NULL\n\0", i);
 			} else {
 				printNoeud(current->elements[i]);
 			}
 		}
-		snprintf(text, 128, "%#x, %02x, %02x\0", current->elements[current->nbElement - 1], current->elements[current->nbElement - 1]->nbIn, current->elements[current->nbElement - 1]->nbout);
-		printff(text);
-		printNoeud(current->elements[current->nbElement - 1]);
-		snprintf(text, 128, "└───────────────────\n \0");
+		snprintf(text, 128, "└───────────────────\n\0");
 		printff(text);
 		current = current->suivant;
 	}
@@ -472,15 +501,6 @@ void logstr(const char * texte) {
 		return;
 	} else {
 		LOG("text : %08X \0", texte);
-		for (int i = 0; i < 16; i++) {
-			snprintf(text, 16, "name[%02d] :  \0" , i); WriteLog(text);
-			snprintf(text, 9, "%03u ->  \0" , (unsigned char) texte[i]); WriteLog(text);
-			if (texte[i] == '\0') {
-				snprintf(text, 4, " \0"); WriteLogln(text);
-			} else {
-				snprintf(text, 4, "%c \0", (unsigned char) texte[i]); WriteLogln(text);
-			}
-		}
 		LOG("text : %s \0", texte);
 	}
 }

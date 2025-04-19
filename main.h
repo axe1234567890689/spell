@@ -3,6 +3,16 @@
 
 #include "window.h"
 
+typedef struct Pos Pos;
+typedef struct IPos IPos;
+typedef struct noeud noeud;
+typedef struct category category;
+typedef struct Player Player;
+typedef struct team team;
+typedef struct SortLinked SortLinked;
+typedef struct PlayerLinked PlayerLinked;
+typedef struct Sort Sort;
+
 typedef struct Pos {
         float x;
         float y;
@@ -13,8 +23,7 @@ typedef struct IPos {
         int y;
 } IPos;
 
-typedef struct noeud
-{
+typedef struct noeud{
         char name[16];
         unsigned char nbIn;
         unsigned char nbout;
@@ -44,6 +53,16 @@ typedef struct team {
         
 } team;
 
+typedef struct SortLinked {
+        Sort * sort;
+        struct SortLinked * suivant;
+} SortLinked;
+
+typedef struct PlayerLinked {
+        Player * player;
+        struct PlayerLinked * suivant;
+} PlayerLinked;
+
 typedef struct Sort {
         Pos pos;
         float rayon;
@@ -55,12 +74,11 @@ typedef struct Sort {
         float rayonSpell;
         float rayonPlayer;
         color * color;
-        int targetID;
-        int proprioID;
+        Pos * target;
+        Player * proprio;
         int ID;
-        int * spellLinkedID;
-        struct Sort ** spellAround;
-        Player ** playerAround;
+        struct SortLinked * spellAround;
+        PlayerLinked ** playerAround;
 } Sort;
 
 noeud * NewNoeud(const char name[16], unsigned char nbIn, unsigned char nbout, ...);
