@@ -44,22 +44,25 @@ int nbCollider = 0;
 
 char text[256];
 
-struct color * noir;
-struct color * blanc;
-struct color * bleu;
-struct color * vert;
-struct color * rouge;
+color * noir;
+color * blanc;
+color * bleu;
+color * vert;
+color * rouge;
 
 MouseCollideBox * collideBoxSpells[10];
+Bouton * boutonSpells[10];
 
 int main(int argc, char ** argv) {
 	StartLog();
+	initBouton();
 
 	for (int i = 0; i < 10; i++) {
 		collideBoxSpells[i] = NULL;
 	}
 
-	newCollideBox(collideBoxSpells, 10, 0, 10, 100, 30, Overed, NotOvered, Clicked);
+	newCollideBox(collideBoxSpells, 10, 0, 10, 100, 30, Overed, NotOvered, Clicked, Release, 0);
+	newCollideBox(collideBoxSpells, 10, 100, 10, 100, 30, Overed, NotOvered, Clicked, Release, 1);
 
 	//FILE * spellSGL = OpenFile("spells/spell.json", "a"); if (spellSGL == NULL) { printf("%s\n", sqlLikeGetErreur()); }
 	//listConst[] = NewNoeud("               \0", 0b000 000 0 0, 0b000 000 0 0, "               \0", "               \0", "               \0", "               \0", "               \0");
@@ -171,22 +174,10 @@ int main(int argc, char ** argv) {
         			if (timeForNextFrame >= timeBetweenFrame) {
         				draw();
 
-					ChangeColorC(windoweGame, noir); 
-					RenderPresent(windoweGame);
-
-					ChangeColorC(windoweSpell, noir); 
-					RenderPresent(windoweSpell);
-
         				timeForNextFrame -= timeBetweenFrame;
         			}
         		} else {
         			draw();
-
-				ChangeColorC(windoweGame, noir); 
-				RenderPresent(windoweGame);
-
-				ChangeColorC(windoweSpell, noir); 
-				RenderPresent(windoweSpell);
         		}
         		//needToDraw = false;
         	}
@@ -227,12 +218,12 @@ int main(int argc, char ** argv) {
 						if (collideBoxSpells[i]->start.x <= mousePos.x && collideBoxSpells[i]->end.x >= mousePos.x && collideBoxSpells[i]->start.y <= mousePos.y && collideBoxSpells[i]->end.y >= mousePos.y) {
 							if (!collideBoxSpells[i]->wasOver) {
 								collideBoxSpells[i]->wasOver = true;
-								collideBoxSpells[i]->whenOver();
+								collideBoxSpells[i]->whenOver(collideBoxSpells[i]->ID);
 							}
 						} else {
 							if (collideBoxSpells[i]->wasOver) {
 								collideBoxSpells[i]->wasOver = false;
-								collideBoxSpells[i]->whenNotOver();
+								collideBoxSpells[i]->whenNotOver(collideBoxSpells[i]->ID);
 							}
 						}
 					}
@@ -247,6 +238,13 @@ int main(int argc, char ** argv) {
 						exMousePose = mousePos;
 						SDL_GetWindowPosition(windoweSpell->window, &exScreenPose.x, &exScreenPose.y);
 						moveScreen = true;
+						for (int i = 0; i < 10; i++) {
+							if (collideBoxSpells[i] != NULL) {
+								if (collideBoxSpells[i]->start.x <= mousePos.x && collideBoxSpells[i]->end.x >= mousePos.x && collideBoxSpells[i]->start.y <= mousePos.y && collideBoxSpells[i]->end.y >= mousePos.y) {
+									collideBoxSpells[i]->whenClick(collideBoxSpells[i]->ID);
+								}
+							}
+						}
 					}
 				}
 				break;
@@ -259,7 +257,7 @@ int main(int argc, char ** argv) {
 						for (int i = 0; i < 10; i++) {
 							if (collideBoxSpells[i] != NULL) {
 								if (collideBoxSpells[i]->start.x <= mousePos.x && collideBoxSpells[i]->end.x >= mousePos.x && collideBoxSpells[i]->start.y <= mousePos.y && collideBoxSpells[i]->end.y >= mousePos.y) {
-									collideBoxSpells[i]->whenCollide();
+									collideBoxSpells[i]->whenRelease(collideBoxSpells[i]->ID);
 								}
 							}
 						}
@@ -296,7 +294,7 @@ int main(int argc, char ** argv) {
         return 0;
 }
 
-MouseCollideBox * newCollideBox(MouseCollideBox * ColliderArray[], int nbColliderinArray, float x, float y, float w, float h, void (*whenOver)(), void (*whenNotOver)(), void (*whenCollide)()) {
+MouseCollideBox * newCollideBox(MouseCollideBox * ColliderArray[], int nbColliderinArray, float x, float y, float w, float h, void (*whenOver)(int ID), void (*whenNotOver)(int ID), void (*whenClick)(int ID), void (*whenRelease)(int ID), int ID) {
 	MouseCollideBox * result = (MouseCollideBox *) malloc(sizeof(MouseCollideBox));
 	result->start.x = x;
 	result->start.y = y;
@@ -305,9 +303,9 @@ MouseCollideBox * newCollideBox(MouseCollideBox * ColliderArray[], int nbCollide
 	result->wasOver = false;
 	result->whenOver = whenOver;
 	result->whenNotOver = whenNotOver;
-	result->whenCollide = whenCollide;
-	result->ID = nbCollider;
-	nbCollider++;
+	result->whenRelease = whenRelease;
+	result->whenClick = whenClick;
+	result->ID = ID;
 
 	for (int i = 0; i < nbColliderinArray; i++) {
 		if (collideBoxSpells[i] == NULL) {
@@ -320,27 +318,23 @@ MouseCollideBox * newCollideBox(MouseCollideBox * ColliderArray[], int nbCollide
 	return NULL;
 }
 
-void Clicked() {
-	printf("Clicked\n");
-}
-
-void Overed() {
-	printf("Over\n");
-}
-
-void NotOvered() {
-	printf("NotOver\n");
-}
-
 void draw() {
 	ChangeColorC(windoweSpell, blanc);
-	#if debug
-	for (int i = 0; i < 10; i++) {
-		if (collideBoxSpells[i] != NULL) {
-			DrawRectangle(windoweSpell, collideBoxSpells[i]->start.x, collideBoxSpells[i]->start.y, collideBoxSpells[i]->end.x - collideBoxSpells[i]->start.x, collideBoxSpells[i]->end.y - collideBoxSpells[i]->start.y, false, 0);
-		}
-	}
-	#endif
+
+        #if debug
+        ChangeColorC(windoweSpell, rouge);
+        for (int i = 0; i < 10; i++) {
+            if (collideBoxSpells[i] != NULL) {
+                DrawRectangle(windoweSpell, collideBoxSpells[i]->start.x, collideBoxSpells[i]->start.y, collideBoxSpells[i]->end.x, collideBoxSpells[i]->end.y, false, 0);
+            }
+        }
+        #endif
+
+	ChangeColorC(windoweGame, noir); 
+	RenderPresent(windoweGame);
+
+	ChangeColorC(windoweSpell, noir); 
+	RenderPresent(windoweSpell);
 }
 
 noeud * NewNoeud(const char name[16], unsigned char nbIn, unsigned char nbout, ...) {

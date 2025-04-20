@@ -13,6 +13,15 @@ typedef struct SortLinked SortLinked;
 typedef struct PlayerLinked PlayerLinked;
 typedef struct Sort Sort;
 
+typedef enum {
+        CONSTANT,
+        DECLENCHEUR,
+        CONDITION,
+        INPUT,
+        TRANSFORM,
+        EFFET
+} CategoryType;
+
 typedef struct Pos {
         float x;
         float y;
