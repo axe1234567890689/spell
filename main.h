@@ -19,7 +19,8 @@ typedef enum {
         CONDITION,
         INPUT,
         TRANSFORM,
-        EFFET
+        EFFET,
+        AUCUN
 } CategoryType;
 
 typedef struct Pos {
@@ -86,7 +87,7 @@ typedef struct Sort {
         Pos * target;
         Player * proprio;
         int ID;
-        struct SortLinked * spellAround;
+        SortLinked ** spellAround;
         PlayerLinked ** playerAround;
 } Sort;
 
@@ -98,6 +99,15 @@ void freeNoeud(noeud * noeuds);
 void freeCategory(category * categories);
 void printCategorie(category * categories);
 void printNoeud(noeud * current);
+
+void Overed(int ID);
+void NotOvered(int ID);
+void Clicked(int ID);
+void Release(int ID);
+void clickedBoutonCategorie(int ID);
+void ReleaseBoutonCategorie(int ID);
+void OveredBoutonCategorie(int ID);
+void NotOveredBoutonCategorie(int ID);
 
 void printff(const char * text);
 void logstr(const char * text);

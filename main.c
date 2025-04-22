@@ -44,6 +44,9 @@ int nbCollider = 0;
 
 char text[256];
 
+CategoryType menuSelect = AUCUN;
+category * categories;
+
 color * noir;
 color * blanc;
 color * bleu;
@@ -51,7 +54,7 @@ color * vert;
 color * rouge;
 
 MouseCollideBox * collideBoxSpells[10];
-Bouton * boutonSpells[10];
+Bouton * boutonSpellsCategory[6];
 
 int main(int argc, char ** argv) {
 	StartLog();
@@ -59,10 +62,21 @@ int main(int argc, char ** argv) {
 
 	for (int i = 0; i < 10; i++) {
 		collideBoxSpells[i] = NULL;
+		boutonSpellsCategory[i] = NULL;
 	}
 
-	newCollideBox(collideBoxSpells, 10, 0, 10, 100, 30, Overed, NotOvered, Clicked, Release, 0);
-	newCollideBox(collideBoxSpells, 10, 100, 10, 100, 30, Overed, NotOvered, Clicked, Release, 1);
+        noir = NewColor(0, 0, 0, 255);
+        blanc = NewColor(200, 200, 200, 255);
+        bleu = NewColor(0, 0, 200, 255);
+        vert = NewColor(0, 200, 0, 255);
+        rouge = NewColor(200, 0, 0, 255);
+
+	NewBouton(boutonSpellsCategory, 10, collideBoxSpells, 10, "Constante      \0", 10, noir, blanc, vert, rouge, 10, 10, 110, 20, OveredBoutonCategorie, NotOveredBoutonCategorie, clickedBoutonCategorie, ReleaseBoutonCategorie, 0, 0., 1.);
+	NewBouton(boutonSpellsCategory, 10, collideBoxSpells, 10, "Déclencheur    \0", 10, noir, blanc, vert, rouge, 10, 40, 110, 20, OveredBoutonCategorie, NotOveredBoutonCategorie, clickedBoutonCategorie, ReleaseBoutonCategorie, 1, 0., 1.);
+	NewBouton(boutonSpellsCategory, 10, collideBoxSpells, 10, "Condition      \0", 10, noir, blanc, vert, rouge, 10, 70, 110, 20, OveredBoutonCategorie, NotOveredBoutonCategorie, clickedBoutonCategorie, ReleaseBoutonCategorie, 2, 0., 1.);
+	NewBouton(boutonSpellsCategory, 10, collideBoxSpells, 10, "Input          \0", 10, noir, blanc, vert, rouge, 10, 100, 110, 20, OveredBoutonCategorie, NotOveredBoutonCategorie, clickedBoutonCategorie, ReleaseBoutonCategorie, 3, 0., 1.);
+	NewBouton(boutonSpellsCategory, 10, collideBoxSpells, 10, "Transform      \0", 10, noir, blanc, vert, rouge, 10, 130, 110, 20, OveredBoutonCategorie, NotOveredBoutonCategorie, clickedBoutonCategorie, ReleaseBoutonCategorie, 4, 0., 1.);
+	NewBouton(boutonSpellsCategory, 10, collideBoxSpells, 10, "Effet          \0", 10, noir, blanc, vert, rouge, 10, 160, 110, 20, OveredBoutonCategorie, NotOveredBoutonCategorie, clickedBoutonCategorie, ReleaseBoutonCategorie, 5, 0., 1.);
 
 	//FILE * spellSGL = OpenFile("spells/spell.json", "a"); if (spellSGL == NULL) { printf("%s\n", sqlLikeGetErreur()); }
 	//listConst[] = NewNoeud("               \0", 0b000 000 0 0, 0b000 000 0 0, "               \0", "               \0", "               \0", "               \0", "               \0");
@@ -73,7 +87,7 @@ int main(int argc, char ** argv) {
 	listConst[2]  = NewNoeud("Float          \0", 0b00100000, 0b00000100, "Int            \0", "Float          \0");
 	listConst[3]  = NewNoeud("Position       \0", 0b00001000, 0b00000010, "X              \0", "Y              \0", "Position       \0");
 	listConst[4]  = NewNoeud("Random         \0", 0b00000000, 0b00000100, "Float          \0");
-	category * categories = NewCategory("Constante      \0", 5, listConst);
+	categories = NewCategory("Constante      \0", 5, listConst);
 	listConst[0]  = NewNoeud("Touche Player  \0", 0b00000000, 0b10000011, "PV             \0", "Mana           \0", "ID             \0", "ID Team        \0", "Position       \0", "Color          \0");
 	listConst[1]  = NewNoeud("0Touche         \0", 0b00000000, 0b00100000, "Material       \0");
 	listConst[2]  = NewNoeud("Position       \0", 0b00000000, 0b00000000);
@@ -151,12 +165,6 @@ int main(int argc, char ** argv) {
         unsigned char nbFPS = 60;
         int timeForNextFrame = 0;
         int timeBetweenFrame = (1. / (float) nbFPS) * 1000;
-
-        noir = NewColor(0, 0, 0, 255);
-        blanc = NewColor(200, 200, 200, 255);
-        bleu = NewColor(0, 0, 200, 255);
-        vert = NewColor(0, 200, 0, 255);
-        rouge = NewColor(200, 0, 0, 255);
 
 	printfASuppr();
 
@@ -240,7 +248,7 @@ int main(int argc, char ** argv) {
 						moveScreen = true;
 						for (int i = 0; i < 10; i++) {
 							if (collideBoxSpells[i] != NULL) {
-								if (collideBoxSpells[i]->start.x <= mousePos.x && collideBoxSpells[i]->end.x >= mousePos.x && collideBoxSpells[i]->start.y <= mousePos.y && collideBoxSpells[i]->end.y >= mousePos.y) {
+								if (collideBoxSpells[i]->wasOver) {
 									collideBoxSpells[i]->whenClick(collideBoxSpells[i]->ID);
 								}
 							}
@@ -256,7 +264,7 @@ int main(int argc, char ** argv) {
 						moveScreen = false;
 						for (int i = 0; i < 10; i++) {
 							if (collideBoxSpells[i] != NULL) {
-								if (collideBoxSpells[i]->start.x <= mousePos.x && collideBoxSpells[i]->end.x >= mousePos.x && collideBoxSpells[i]->start.y <= mousePos.y && collideBoxSpells[i]->end.y >= mousePos.y) {
+								if (collideBoxSpells[i]->wasOver) {
 									collideBoxSpells[i]->whenRelease(collideBoxSpells[i]->ID);
 								}
 							}
@@ -294,32 +302,17 @@ int main(int argc, char ** argv) {
         return 0;
 }
 
-MouseCollideBox * newCollideBox(MouseCollideBox * ColliderArray[], int nbColliderinArray, float x, float y, float w, float h, void (*whenOver)(int ID), void (*whenNotOver)(int ID), void (*whenClick)(int ID), void (*whenRelease)(int ID), int ID) {
-	MouseCollideBox * result = (MouseCollideBox *) malloc(sizeof(MouseCollideBox));
-	result->start.x = x;
-	result->start.y = y;
-	result->end.x = x + w;
-	result->end.y = y + h;
-	result->wasOver = false;
-	result->whenOver = whenOver;
-	result->whenNotOver = whenNotOver;
-	result->whenRelease = whenRelease;
-	result->whenClick = whenClick;
-	result->ID = ID;
-
-	for (int i = 0; i < nbColliderinArray; i++) {
-		if (collideBoxSpells[i] == NULL) {
-			collideBoxSpells[i] = result;
-			return result;
-		}
-	}
-	free(result);
-	LOG("ColliderArray est plein\n\0");
-	return NULL;
-}
-
 void draw() {
 	ChangeColorC(windoweSpell, blanc);
+
+	for (int i = 0; i < 10; i++) {
+		if (boutonSpellsCategory[i] != NULL && boutonSpellsCategory[i]->Draw) {
+			ChangeColorC(windoweSpell, &boutonSpellsCategory[i]->colorUse);
+			DrawRectangle(windoweSpell, boutonSpellsCategory[i]->collider.start.x, boutonSpellsCategory[i]->collider.start.y, boutonSpellsCategory[i]->collider.end.x, boutonSpellsCategory[i]->collider.end.y, true, 0);
+			ChangeColorC(windoweSpell, boutonSpellsCategory[i]->text.color);
+			DrawString(windoweSpell, boutonSpellsCategory[i]->text.pos.x + boutonSpellsCategory[i]->collider.start.x, boutonSpellsCategory[i]->text.pos.y + boutonSpellsCategory[i]->collider.start.y, boutonSpellsCategory[i]->text.text);//, boutonSpellsCategory[i]->text.size, &boutonSpellsCategory[i]->text.color, 0);
+		}
+	}
 
         #if debug
         ChangeColorC(windoweSpell, rouge);
@@ -335,6 +328,58 @@ void draw() {
 
 	ChangeColorC(windoweSpell, noir); 
 	RenderPresent(windoweSpell);
+}
+
+void clickedBoutonCategorie(int ID) {
+	menuSelect = (CategoryType) ID;
+	category * currentCategorie = categories;
+	for (int i = 0; i < ID; i++) {
+		if (currentCategorie->suivant != NULL) {
+			currentCategorie = currentCategorie->suivant;
+		}
+	}
+	boutonSpellsCategory[ID]->colorUse = *boutonSpellsCategory[ID]->clicked;
+	for (int i = 0; i < 10; i++) {
+		if (boutonSpellsCategory[i] != NULL) {
+			if (i > ID) {
+				int c = (i + currentCategorie->nbElement) * 30 + 10;
+				boutonSpellsCategory[i]->collider.start.y = c;
+				boutonSpellsCategory[i]->collider.end.y = c + 20;
+			} else {
+				int c = (i) * 30 + 10;
+				boutonSpellsCategory[i]->collider.start.y = c;
+				boutonSpellsCategory[i]->collider.end.y = c + 20;
+			}
+		}
+	}
+}
+
+void ReleaseBoutonCategorie(int ID) {
+	boutonSpellsCategory[ID]->colorUse = *boutonSpellsCategory[ID]->over;
+}
+
+void OveredBoutonCategorie(int ID) {
+	boutonSpellsCategory[ID]->colorUse = *boutonSpellsCategory[ID]->over;
+}
+
+void NotOveredBoutonCategorie(int ID) {
+	boutonSpellsCategory[ID]->colorUse = *boutonSpellsCategory[ID]->normal;
+}
+
+void Clicked(int ID) {
+	printf("Clicked ID = %d\n", ID);
+}
+
+void Release(int ID) {
+	printf("Release ID = %d\n", ID);
+}
+
+void Overed(int ID) {
+	printf("Over ID = %d\n", ID);
+}
+
+void NotOvered(int ID) {
+	printf("NotOver ID = %d\n", ID);
 }
 
 noeud * NewNoeud(const char name[16], unsigned char nbIn, unsigned char nbout, ...) {
