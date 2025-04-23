@@ -13,7 +13,7 @@
 #include "log.h"
 
 #define log 0
-#define debug 1
+#define debug 0
 
 #if log
 #define LOG(fmt, ...) \
@@ -48,106 +48,57 @@ CategoryType menuSelect = AUCUN;
 category * categories;
 
 color * noir;
+color * gris;
 color * blanc;
 color * bleu;
 color * vert;
 color * rouge;
 
-MouseCollideBox * collideBoxSpells[10];
+#define nbColliderMax 63
+MouseCollideBox * collideBoxSpells[nbColliderMax];
 Bouton * boutonSpellsCategory[6];
+Bouton * boutonSpellsNoeud[56];
 
 int main(int argc, char ** argv) {
 	StartLog();
 	initBouton();
+	creatCategorie();
 
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < nbColliderMax; i++) {
 		collideBoxSpells[i] = NULL;
+	}
+	for (int i = 0; i < 6; i++) {
 		boutonSpellsCategory[i] = NULL;
+	}
+	for (int i = 0; i < 56; i++) {
+		boutonSpellsNoeud[i] = NULL;
 	}
 
         noir = NewColor(0, 0, 0, 255);
+        gris = NewColor(100, 100, 100, 255);
         blanc = NewColor(200, 200, 200, 255);
         bleu = NewColor(0, 0, 200, 255);
         vert = NewColor(0, 200, 0, 255);
         rouge = NewColor(200, 0, 0, 255);
 
-	NewBouton(boutonSpellsCategory, 10, collideBoxSpells, 10, "Constante      \0", 10, noir, blanc, vert, rouge, 10, 10, 110, 20, OveredBoutonCategorie, NotOveredBoutonCategorie, clickedBoutonCategorie, ReleaseBoutonCategorie, 0, 0., 1.);
-	NewBouton(boutonSpellsCategory, 10, collideBoxSpells, 10, "Déclencheur    \0", 10, noir, blanc, vert, rouge, 10, 40, 110, 20, OveredBoutonCategorie, NotOveredBoutonCategorie, clickedBoutonCategorie, ReleaseBoutonCategorie, 1, 0., 1.);
-	NewBouton(boutonSpellsCategory, 10, collideBoxSpells, 10, "Condition      \0", 10, noir, blanc, vert, rouge, 10, 70, 110, 20, OveredBoutonCategorie, NotOveredBoutonCategorie, clickedBoutonCategorie, ReleaseBoutonCategorie, 2, 0., 1.);
-	NewBouton(boutonSpellsCategory, 10, collideBoxSpells, 10, "Input          \0", 10, noir, blanc, vert, rouge, 10, 100, 110, 20, OveredBoutonCategorie, NotOveredBoutonCategorie, clickedBoutonCategorie, ReleaseBoutonCategorie, 3, 0., 1.);
-	NewBouton(boutonSpellsCategory, 10, collideBoxSpells, 10, "Transform      \0", 10, noir, blanc, vert, rouge, 10, 130, 110, 20, OveredBoutonCategorie, NotOveredBoutonCategorie, clickedBoutonCategorie, ReleaseBoutonCategorie, 4, 0., 1.);
-	NewBouton(boutonSpellsCategory, 10, collideBoxSpells, 10, "Effet          \0", 10, noir, blanc, vert, rouge, 10, 160, 110, 20, OveredBoutonCategorie, NotOveredBoutonCategorie, clickedBoutonCategorie, ReleaseBoutonCategorie, 5, 0., 1.);
-
+	int x = 0;
+	int indexBouton = 0;
+	category * currentCategorie = categories;
+	while (currentCategorie != NULL) {
+		NewBouton(boutonSpellsCategory, 6, collideBoxSpells, 63, currentCategorie->name, 10, noir, blanc, vert, rouge, 10, x * 30 + 10, 120, 20, OveredBoutonCategorie, NotOveredBoutonCategorie, clickedBoutonCategorie, ReleaseBoutonCategorie, x, 0., 1.);
+		for (int j = 0; j < currentCategorie->nbElement; j++) {
+			NewBouton(boutonSpellsNoeud, 56, collideBoxSpells, 63, currentCategorie->elements[j]->name, 10, noir, blanc, vert, rouge, 20, (j + x) * 30 + 40, 120, 20, OveredNoeud, NotOveredNoeud, ClickedNoeud, ReleaseNoeud, j * 10 + x, 0., 1.);
+			boutonSpellsNoeud[indexBouton]->Draw = false;
+			indexBouton ++;
+		}
+		x ++;
+		currentCategorie = currentCategorie->suivant;
+	}
+	
 	//FILE * spellSGL = OpenFile("spells/spell.json", "a"); if (spellSGL == NULL) { printf("%s\n", sqlLikeGetErreur()); }
-	//listConst[] = NewNoeud("               \0", 0b000 000 0 0, 0b000 000 0 0, "               \0", "               \0", "               \0", "               \0", "               \0");
-
-	noeud * listConst[16];
-	listConst[0]  = NewNoeud("Color          \0", 0b10000000, 0b00000001, "Red            \0", "Green          \0", "Blue           \0", "Alpha          \0", "Color          \0");
-	listConst[1]  = NewNoeud("Int            \0", 0b00000100, 0b00100000, "Float          \0", "Int            \0");
-	listConst[2]  = NewNoeud("Float          \0", 0b00100000, 0b00000100, "Int            \0", "Float          \0");
-	listConst[3]  = NewNoeud("Position       \0", 0b00001000, 0b00000010, "X              \0", "Y              \0", "Position       \0");
-	listConst[4]  = NewNoeud("Random         \0", 0b00000000, 0b00000100, "Float          \0");
-	categories = NewCategory("Constante      \0", 5, listConst);
-	listConst[0]  = NewNoeud("Touche Player  \0", 0b00000000, 0b10000011, "PV             \0", "Mana           \0", "ID             \0", "ID Team        \0", "Position       \0", "Color          \0");
-	listConst[1]  = NewNoeud("0Touche         \0", 0b00000000, 0b00100000, "Material       \0");
-	listConst[2]  = NewNoeud("Position       \0", 0b00000000, 0b00000000);
-	listConst[3]  = NewNoeud("Distance       \0", 0b00100000, 0b00000000, "Distance Max   \0");
-	listConst[4]  = NewNoeud("Mana Lost      \0", 0b00000100, 0b00000100, "Mana Limit     \0", "Mana Remaning  \0");
-	listConst[5]  = NewNoeud("mana Stored    \0", 0b00000100, 0b00000100, "Mana Déclencher\0", "Mana Stored    \0");
-	listConst[6]  = NewNoeud("New Color      \0", 0b00000000, 0b00000001, "Color          \0");
-	categories->suivant = NewCategory("Déclencheur    \0", 7, listConst);
-	listConst[0]  = NewNoeud("==             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
-	listConst[1]  = NewNoeud("<              \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
-	listConst[2]  = NewNoeud(">              \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
-	listConst[3]  = NewNoeud("<=             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
-	listConst[4]  = NewNoeud(">=             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
-	listConst[5]  = NewNoeud("inverte        \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
-	listConst[6]  = NewNoeud("et             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
-	listConst[7]  = NewNoeud("ou             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
-	listConst[8]  = NewNoeud("wait n    tick \0", 0b00100000, 0b00000000, "nb ticks       \0");
-	categories->suivant->suivant = NewCategory("Condition      \0", 9, listConst);
-	listConst[0]  = NewNoeud("Position       \0", 0b00000000, 0b00000010, "Position       \0");
-	listConst[1]  = NewNoeud("Color          \0", 0b00000000, 0b00000001, "Color          \0");
-	listConst[2]  = NewNoeud("Vitesse        \0", 0b00000000, 0b00000100, "Vitesse        \0");
-	listConst[3]  = NewNoeud("Acceleration   \0", 0b00000000, 0b00000100, "Acceleration   \0");
-	listConst[4]  = NewNoeud("Direction      \0", 0b00000000, 0b00001000, "Yaw            \0", "Pitch          \0");
-	listConst[5]  = NewNoeud("Player Around  \0", 0b01000000, 0b00100000, "Next Player    \0", "Player id      \0");
-	listConst[6]  = NewNoeud("Get Player     \0", 0b00100000, 0b00100000, "Player id      \0", "Player id      \0");
-	listConst[7]  = NewNoeud("Caster         \0", 0b00000000, 0b00100000, "Player id      \0");
-	listConst[8]  = NewNoeud("Attention?     \0", 0b00000000, 0b00000000);
-	listConst[9]  = NewNoeud("Spell Around   \0", 0b01000000, 0b00100000, "Check Spell    \0", "Next Spell     \0", "Spell id       \0");
-	listConst[10] = NewNoeud("Angle To       \0", 0b00000010, 0b00001000, "Position To    \0", "Yaw            \0", "Pitch          \0");
-	listConst[11] = NewNoeud("Donne?         \0", 0b01000000, 0b00000000, "Data           \0", "ID             \0", "?              \0");
-	listConst[12] = NewNoeud("Get Messages   \0", 0b00100000, 0b00100000, "Next Message   \0", "Message        \0");
-	listConst[13] = NewNoeud("Get Value      \0", 0b00100000, 0b00100111, "Index          \0", "Int            \0", "Float          \0", "Position       \0", "Color          \0");
-	listConst[14] = NewNoeud("ID             \0", 0b00000000, 0b00100000, "ID             \0");
-	categories->suivant->suivant->suivant = NewCategory("Input          \0", 15, listConst);
-	listConst[0]  = NewNoeud("Pos   ->  Float\0", 0b00000010, 0b00001000, "Position       \0", "X              \0", "Y              \0");
-	listConst[1]  = NewNoeud("Float ->    Pos\0", 0b00001000, 0b00000010, "X              \0", "Y              \0", "Position       \0");
-	listConst[2]  = NewNoeud("Float ->    Int\0", 0b00000100, 0b00100000, "A Virgulr      \0", "Sans Virgule   \0");
-	listConst[3]  = NewNoeud("Int   ->  Float\0", 0b00100000, 0b00000100, "Sans Virgule   \0", "A Virgule      \0");
-	listConst[4]  = NewNoeud("Pos   ->  Angle\0", 0b00000010, 0b00101000, "Position       \0", "Distance       \0", "Yaw            \0", "Pitch          \0");
-	listConst[5]  = NewNoeud("Angle ->    Pos\0", 0b00001000, 0b00000010, "Yaw            \0", "Pitch          \0", "Distance       \0");
-	categories->suivant->suivant->suivant->suivant = NewCategory("Transform      \0", 6, listConst);
-	listConst[0]  = NewNoeud("Aller en       \0", 0b00000010, 0b00000000, "Position       \0");
-	listConst[1]  = NewNoeud("Vitesse Max    \0", 0b00100000, 0b00000000, "Vitesse Max    \0");
-	listConst[2]  = NewNoeud("Target         \0", 0b00000010, 0b00000000, "Player Position\0");
-	listConst[3]  = NewNoeud("Explosion      \0", 0b00000100, 0b00000000, "Intensité      \0");
-	listConst[4]  = NewNoeud("Température    \0", 0b00100000, 0b00000000, "°C             \0");
-	listConst[5]  = NewNoeud("Rayon Détection\0", 0b00001000, 0b00000000, "Rayon Player   \0", "Rayon Spell    \0");
-	listConst[6]  = NewNoeud("Direction      \0", 0b00001000, 0b00000000, "Yaw            \0", "Pitch          \0");
-	listConst[7]  = NewNoeud("Send Message   \0", 0b01000000, 0b00000000, "Spell ID       \0", "Message        \0");
-	listConst[8]  = NewNoeud("Rayon          \0", 0b00000100, 0b00000000, "Rayon          \0");
-	listConst[9]  = NewNoeud("Masse          \0", 0b00000100, 0b00000000, "Masse          \0");
-	listConst[10] = NewNoeud("Tick Per s     \0", 0b00100000, 0b00000000, "Tick Per s     \0");
-	listConst[11] = NewNoeud("Check Spell    \0", 0b00000000, 0b00100000, "nb Spell       \0");
-	listConst[12] = NewNoeud("Check Player   \0", 0b00000000, 0b00000000, "nb Player      \0");
-	listConst[13] = NewNoeud("Stock Value    \0", 0b01000111, 0b00000000, "index          \0", "Int            \0", "Float          \0", "Position       \0", "Color          \0");
-	categories->suivant->suivant->suivant->suivant = NewCategory("Effet          \0", 14, listConst);
 
 	windoweGame = NewWindow("Game", -1, -1, 1920, 1080, 0, 0);
 	windoweSpell = NewWindow("Spell", 0, 0, 960, 540, SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_SKIP_TASKBAR, 0);
-	SDL_HideWindow(windoweGame->window);
 	
 	mousePos.x = -1; mousePos.y = -1;
 	camera.x = 0; camera.y = 0;
@@ -221,7 +172,7 @@ int main(int argc, char ** argv) {
         	        case SDL_MOUSEMOTION:
         		        mousePos.x = events.motion.x;
         		        mousePos.y = events.motion.y;
-				for (int i = 0; i < 10; i++) {
+				for (int i = 0; i < nbColliderMax; i++) {
 					if (collideBoxSpells[i] != NULL) {
 						if (collideBoxSpells[i]->start.x <= mousePos.x && collideBoxSpells[i]->end.x >= mousePos.x && collideBoxSpells[i]->start.y <= mousePos.y && collideBoxSpells[i]->end.y >= mousePos.y) {
 							if (!collideBoxSpells[i]->wasOver) {
@@ -246,7 +197,7 @@ int main(int argc, char ** argv) {
 						exMousePose = mousePos;
 						SDL_GetWindowPosition(windoweSpell->window, &exScreenPose.x, &exScreenPose.y);
 						moveScreen = true;
-						for (int i = 0; i < 10; i++) {
+						for (int i = 0; i < nbColliderMax; i++) {
 							if (collideBoxSpells[i] != NULL) {
 								if (collideBoxSpells[i]->wasOver) {
 									collideBoxSpells[i]->whenClick(collideBoxSpells[i]->ID);
@@ -262,7 +213,7 @@ int main(int argc, char ** argv) {
 				} else if (events.window.windowID == windoweSpell->id) {
 					if (events.button.button == 1) {
 						moveScreen = false;
-						for (int i = 0; i < 10; i++) {
+						for (int i = 0; i < nbColliderMax; i++) {
 							if (collideBoxSpells[i] != NULL) {
 								if (collideBoxSpells[i]->wasOver) {
 									collideBoxSpells[i]->whenRelease(collideBoxSpells[i]->ID);
@@ -289,10 +240,17 @@ int main(int argc, char ** argv) {
         	}
         }
 
-	for (int i = 0; i < 10; i++) {
-		if (collideBoxSpells[i] != NULL) {
-			free(collideBoxSpells[i]);
-			collideBoxSpells[i] = NULL;
+	for (int i = 0; i < 6; i++) {
+		if (boutonSpellsCategory[i] != NULL) {
+			free(boutonSpellsCategory[i]);
+			boutonSpellsCategory[i] = NULL;
+		}
+	}
+
+	for (int i = 0; i < 56; i++) {
+		if (boutonSpellsNoeud[i] != NULL) {
+			free(boutonSpellsNoeud[i]);
+			boutonSpellsNoeud[i] = NULL;
 		}
 	}
 
@@ -302,10 +260,87 @@ int main(int argc, char ** argv) {
         return 0;
 }
 
-void draw() {
-	ChangeColorC(windoweSpell, blanc);
+void creatCategorie() {
+	noeud * listConst[16];
+	listConst[0]  = NewNoeud("Color          \0", 0b10000000, 0b00000001, "Red            \0", "Green          \0", "Blue           \0", "Alpha          \0", "Color          \0");
+	listConst[1]  = NewNoeud("Int            \0", 0b00000100, 0b00100000, "Float          \0", "Int            \0");
+	listConst[2]  = NewNoeud("Float          \0", 0b00100000, 0b00000100, "Int            \0", "Float          \0");
+	listConst[3]  = NewNoeud("Position       \0", 0b00001000, 0b00000010, "X              \0", "Y              \0", "Position       \0");
+	listConst[4]  = NewNoeud("Random         \0", 0b00000000, 0b00000100, "Float          \0");
+	categories = NewCategory("Constante      \0", 5, listConst);
+	listConst[0]  = NewNoeud("Touche Player  \0", 0b00000000, 0b10000011, "PV             \0", "Mana           \0", "ID             \0", "ID Team        \0", "Position       \0", "Color          \0");
+	listConst[1]  = NewNoeud("0Touche        \0", 0b00000000, 0b00100000, "Material       \0");
+	listConst[2]  = NewNoeud("Position       \0", 0b00000000, 0b00000000);
+	listConst[3]  = NewNoeud("Distance       \0", 0b00100000, 0b00000000, "Distance Max   \0");
+	listConst[4]  = NewNoeud("Mana Lost      \0", 0b00000100, 0b00000100, "Mana Limit     \0", "Mana Remaning  \0");
+	listConst[5]  = NewNoeud("mana Stored    \0", 0b00000100, 0b00000100, "Mana Déclencher\0", "Mana Stored    \0");
+	listConst[6]  = NewNoeud("New Color      \0", 0b00000000, 0b00000001, "Color          \0");
+	categories->suivant = NewCategory("Déclencheur    \0", 7, listConst);
+	listConst[0]  = NewNoeud("==             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
+	listConst[1]  = NewNoeud("<              \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
+	listConst[2]  = NewNoeud(">              \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
+	listConst[3]  = NewNoeud("<=             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
+	listConst[4]  = NewNoeud(">=             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
+	listConst[5]  = NewNoeud("inverte        \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
+	listConst[6]  = NewNoeud("et             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
+	listConst[7]  = NewNoeud("ou             \0", 0b01000000, 0b00100000, "valeur1        \0", "valeur2        \0", "resultat       \0");
+	listConst[8]  = NewNoeud("wait n tick    \0", 0b00100000, 0b00000000, "nb ticks       \0");
+	categories->suivant->suivant = NewCategory("Condition      \0", 9, listConst);
+	listConst[0]  = NewNoeud("Position       \0", 0b00000000, 0b00000010, "Position       \0");
+	listConst[1]  = NewNoeud("Color          \0", 0b00000000, 0b00000001, "Color          \0");
+	listConst[2]  = NewNoeud("Vitesse        \0", 0b00000000, 0b00000100, "Vitesse        \0");
+	listConst[3]  = NewNoeud("Acceleration   \0", 0b00000000, 0b00000100, "Acceleration   \0");
+	listConst[4]  = NewNoeud("Direction      \0", 0b00000000, 0b00001000, "Yaw            \0", "Pitch          \0");
+	listConst[5]  = NewNoeud("Player Around  \0", 0b01000000, 0b00100000, "Next Player    \0", "Player id      \0");
+	listConst[6]  = NewNoeud("Get Player     \0", 0b00100000, 0b00100000, "Player id      \0", "Player id      \0");
+	listConst[7]  = NewNoeud("Caster         \0", 0b00000000, 0b00100000, "Player id      \0");
+	listConst[8]  = NewNoeud("Attention?     \0", 0b00000000, 0b00000000);
+	listConst[9]  = NewNoeud("Spell Around   \0", 0b01000000, 0b00100000, "Check Spell    \0", "Next Spell     \0", "Spell id       \0");
+	listConst[10] = NewNoeud("Angle To       \0", 0b00000010, 0b00001000, "Position To    \0", "Yaw            \0", "Pitch          \0");
+	listConst[11] = NewNoeud("Donne?         \0", 0b01000000, 0b00000000, "Data           \0", "ID             \0", "?              \0");
+	listConst[12] = NewNoeud("Get Messages   \0", 0b00100000, 0b00100000, "Next Message   \0", "Message        \0");
+	listConst[13] = NewNoeud("Get Value      \0", 0b00100000, 0b00100111, "Index          \0", "Int            \0", "Float          \0", "Position       \0", "Color          \0");
+	listConst[14] = NewNoeud("ID             \0", 0b00000000, 0b00100000, "ID             \0");
+	categories->suivant->suivant->suivant = NewCategory("Input          \0", 15, listConst);
+	listConst[0]  = NewNoeud("Pos  -> Float  \0", 0b00000010, 0b00001000, "Position       \0", "X              \0", "Y              \0");
+	listConst[1]  = NewNoeud("Float->   Pos  \0", 0b00001000, 0b00000010, "X              \0", "Y              \0", "Position       \0");
+	listConst[2]  = NewNoeud("Float->   Int  \0", 0b00000100, 0b00100000, "A Virgulr      \0", "Sans Virgule   \0");
+	listConst[3]  = NewNoeud("Int  -> Float  \0", 0b00100000, 0b00000100, "Sans Virgule   \0", "A Virgule      \0");
+	listConst[4]  = NewNoeud("Pos  -> Angle  \0", 0b00000010, 0b00101000, "Position       \0", "Distance       \0", "Yaw            \0", "Pitch          \0");
+	listConst[5]  = NewNoeud("Angle->   Pos  \0", 0b00001000, 0b00000010, "Yaw            \0", "Pitch          \0", "Distance       \0");
+	categories->suivant->suivant->suivant->suivant = NewCategory("Transform      \0", 6, listConst);
+	listConst[0]  = NewNoeud("Aller en       \0", 0b00000010, 0b00000000, "Position       \0");
+	listConst[1]  = NewNoeud("Vitesse Max    \0", 0b00100000, 0b00000000, "Vitesse Max    \0");
+	listConst[2]  = NewNoeud("Target         \0", 0b00000010, 0b00000000, "Player Position\0");
+	listConst[3]  = NewNoeud("Explosion      \0", 0b00000100, 0b00000000, "Intensité      \0");
+	listConst[4]  = NewNoeud("Température    \0", 0b00100000, 0b00000000, "°C             \0");
+	listConst[5]  = NewNoeud("Rayon Detection\0", 0b00001000, 0b00000000, "Rayon Player   \0", "Rayon Spell    \0");
+	listConst[6]  = NewNoeud("Direction      \0", 0b00001000, 0b00000000, "Yaw            \0", "Pitch          \0");
+	listConst[7]  = NewNoeud("Send Message   \0", 0b01000000, 0b00000000, "Spell ID       \0", "Message        \0");
+	listConst[8]  = NewNoeud("Rayon          \0", 0b00000100, 0b00000000, "Rayon          \0");
+	listConst[9]  = NewNoeud("Masse          \0", 0b00000100, 0b00000000, "Masse          \0");
+	listConst[10] = NewNoeud("Tick Per s     \0", 0b00100000, 0b00000000, "Tick Per s     \0");
+	listConst[11] = NewNoeud("Check Spell    \0", 0b00000000, 0b00100000, "nb Spell       \0");
+	listConst[12] = NewNoeud("Check Player   \0", 0b00000000, 0b00000000, "nb Player      \0");
+	listConst[13] = NewNoeud("Stock Value    \0", 0b01000111, 0b00000000, "index          \0", "Int            \0", "Float          \0", "Position       \0", "Color          \0");
+	categories->suivant->suivant->suivant->suivant->suivant = NewCategory("Effet          \0", 14, listConst);
+}
 
-	for (int i = 0; i < 10; i++) {
+void draw() {
+	ChangeColorC(windoweSpell, gris);
+
+	DrawRectangle(windoweSpell, 0, 0, 150, 1080, true, 0);
+
+	for (int i = 0; i < 56; i++) {
+		if (boutonSpellsNoeud[i] != NULL && boutonSpellsNoeud[i]->Draw) {
+			ChangeColorC(windoweSpell, &boutonSpellsNoeud[i]->colorUse);
+			DrawRectangle(windoweSpell, boutonSpellsNoeud[i]->collider.start.x, boutonSpellsNoeud[i]->collider.start.y, boutonSpellsNoeud[i]->collider.end.x, boutonSpellsNoeud[i]->collider.end.y, true, 0);
+			ChangeColorC(windoweSpell, boutonSpellsNoeud[i]->text.color);
+			DrawString(windoweSpell, boutonSpellsNoeud[i]->text.pos.x + boutonSpellsNoeud[i]->collider.start.x, boutonSpellsNoeud[i]->text.pos.y + boutonSpellsNoeud[i]->collider.start.y, boutonSpellsNoeud[i]->text.text);//, boutonSpellsCategory[i]->text.size, &boutonSpellsCategory[i]->text.color, 0);
+		}
+	}
+
+	for (int i = 0; i < 6; i++) {
 		if (boutonSpellsCategory[i] != NULL && boutonSpellsCategory[i]->Draw) {
 			ChangeColorC(windoweSpell, &boutonSpellsCategory[i]->colorUse);
 			DrawRectangle(windoweSpell, boutonSpellsCategory[i]->collider.start.x, boutonSpellsCategory[i]->collider.start.y, boutonSpellsCategory[i]->collider.end.x, boutonSpellsCategory[i]->collider.end.y, true, 0);
@@ -316,7 +351,7 @@ void draw() {
 
         #if debug
         ChangeColorC(windoweSpell, rouge);
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 63; i++) {
             if (collideBoxSpells[i] != NULL) {
                 DrawRectangle(windoweSpell, collideBoxSpells[i]->start.x, collideBoxSpells[i]->start.y, collideBoxSpells[i]->end.x, collideBoxSpells[i]->end.y, false, 0);
             }
@@ -333,13 +368,22 @@ void draw() {
 void clickedBoutonCategorie(int ID) {
 	menuSelect = (CategoryType) ID;
 	category * currentCategorie = categories;
+	int index = 0;
 	for (int i = 0; i < ID; i++) {
 		if (currentCategorie->suivant != NULL) {
+			index += currentCategorie->nbElement;
 			currentCategorie = currentCategorie->suivant;
 		}
 	}
+	for (int i = 0; i < 56; i++) {
+		if (currentCategorie->nbElement + index > i && index <= i) {
+			boutonSpellsNoeud[i]->Draw = true;
+		} else {
+			boutonSpellsNoeud[i]->Draw = false;
+		}
+	}
 	boutonSpellsCategory[ID]->colorUse = *boutonSpellsCategory[ID]->clicked;
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 6; i++) {
 		if (boutonSpellsCategory[i] != NULL) {
 			if (i > ID) {
 				int c = (i + currentCategorie->nbElement) * 30 + 10;
@@ -364,6 +408,40 @@ void OveredBoutonCategorie(int ID) {
 
 void NotOveredBoutonCategorie(int ID) {
 	boutonSpellsCategory[ID]->colorUse = *boutonSpellsCategory[ID]->normal;
+}
+
+void ClickedNoeud(int ID) {
+	printf("Clicked ID = %d\n", ID);
+}
+
+void ReleaseNoeud(int ID) {
+	category * currentCategorie = categories;
+	int index = ID / 10;
+	for (int i = 0; i < ID % 10; i++) {
+		index += currentCategorie->nbElement;
+		currentCategorie = currentCategorie->suivant;
+	}
+	boutonSpellsNoeud[index]->colorUse = *boutonSpellsNoeud[index]->over;
+}
+
+void OveredNoeud(int ID) {
+	category * currentCategorie = categories;
+	int index = ID / 10;
+	for (int i = 0; i < ID % 10; i++) {
+		index += currentCategorie->nbElement;
+		currentCategorie = currentCategorie->suivant;
+	}
+	boutonSpellsNoeud[index]->colorUse = *boutonSpellsNoeud[index]->over;
+}
+
+void NotOveredNoeud(int ID) {
+	category * currentCategorie = categories;
+	int index = ID / 10;
+	for (int i = 0; i < ID % 10; i++) {
+		index += currentCategorie->nbElement;
+		currentCategorie = currentCategorie->suivant;
+	}
+	boutonSpellsNoeud[index]->colorUse = *boutonSpellsNoeud[index]->normal;
 }
 
 void Clicked(int ID) {

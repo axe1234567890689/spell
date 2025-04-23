@@ -99,11 +99,16 @@ void freeNoeud(noeud * noeuds);
 void freeCategory(category * categories);
 void printCategorie(category * categories);
 void printNoeud(noeud * current);
+void creatCategorie();
 
 void Overed(int ID);
 void NotOvered(int ID);
 void Clicked(int ID);
 void Release(int ID);
+void OveredNoeud(int ID);
+void NotOveredNoeud(int ID);
+void ClickedNoeud(int ID);
+void ReleaseNoeud(int ID);
 void clickedBoutonCategorie(int ID);
 void ReleaseBoutonCategorie(int ID);
 void OveredBoutonCategorie(int ID);
