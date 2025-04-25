@@ -102,7 +102,7 @@ color *NewColor(unsigned char r, unsigned char g, unsigned char b, unsigned char
         result->g = g;
         result->b = b;
         result->a = a;
-        NewTypeCast((void *) result, COLOR);
+        NewTypeCast((void *) result, WIN_COLOR);
         return result;
 }
 
@@ -129,7 +129,7 @@ void printfASuppr() {
         {
                 switch (current->type)
                 {
-                case COLOR:
+                case WIN_COLOR:
                         printf("        COLOR       \n");
                         printf(" - red = %d\n", ((color * ) current->value)->r);
                         printf(" - green = %d\n", ((color * ) current->value)->g);

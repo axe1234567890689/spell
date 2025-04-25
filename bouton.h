@@ -6,28 +6,24 @@
 #include "window.h"
 #include "main.h"
 
-typedef struct Pos Pos;
-typedef struct Text Text;
-typedef struct Bouton Bouton;
-typedef struct Animation Animation;
-typedef struct AnimModule AnimModule;
-typedef struct MouseCollideBox MouseCollideBox;
-
-typedef enum {
+typedef enum VarType{
         INT,
-        CHAR,
-        FLOAT
+        FLOAT,
+        POSITION,
+        COLOR,
+        BOOL
 } VarType;
 
 typedef struct MouseCollideBox {
         Pos start;
         Pos end;
         bool wasOver;
-        void (*whenOver)(int ID);
-        void (*whenNotOver)(int ID);
-        void (*whenRelease)(int ID);
-        void (*whenClick)(int ID);
-        int ID;
+        bool enabled;
+        void (*whenOver)(uint64_t ID);
+        void (*whenNotOver)(uint64_t ID);
+        void (*whenRelease)(uint64_t ID);
+        void (*whenClick)(uint64_t ID);
+        uint64_t ID;
 } MouseCollideBox;
 
 typedef struct AnimModule {
@@ -66,8 +62,9 @@ typedef struct Bouton {
         Animation anim;
 } Bouton;
 
-MouseCollideBox * newCollideBox(MouseCollideBox * ColliderArray[], int nbColliderinArray, float x, float y, float w, float h, void (*whenOver)(int ID), void (*whenNotOver)(int ID), void (*whenClick)(int ID), void (*whenRelease)(int ID), int ID);
-Bouton * NewBouton(Bouton * BoutonArray[], int nbBoutoninArray, MouseCollideBox * ColliderArray[], int nbColliderinArray, char * text, int TextSize, color * TextColor, color * normalColor, color * overColor, color * clickedColor, float x, float y, float w, float h, void (*whenOver)(int ID), void (*whenNotOver)(int ID), void (*whenClick)(int ID), void (*whenRelease)(int ID), int ID, float animMin, float animMax);
+MouseCollideBox * newCollideBox(MouseCollideBox * ColliderArray[], int nbColliderinArray, float x, float y, float w, float h, void (*whenOver)(uint64_t ID), void (*whenNotOver)(uint64_t ID), void (*whenClick)(uint64_t ID), void (*whenRelease)(uint64_t ID), uint64_t ID);
+Bouton * NewBouton(Bouton * BoutonArray[], int nbBoutoninArray, MouseCollideBox * ColliderArray[], int nbColliderinArray, char * text, int TextSize, color * TextColor, color * normalColor, color * overColor, color * clickedColor, float x, float y, float w, float h, void (*whenOver)(uint64_t ID), void (*whenNotOver)(uint64_t ID), void (*whenClick)(uint64_t ID), void (*whenRelease)(uint64_t ID), uint64_t
+ ID, float animMin, float animMax);
 void initBouton();
 
 #endif

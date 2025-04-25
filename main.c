@@ -7,13 +7,14 @@
 #include <assert.h>
 
 #include "main.h"
+#include "spellUI.h"
 #include "window.h"
 #include "file.h"
 #include "bouton.h"
 #include "log.h"
 
 #define log 0
-#define debug 0
+#define debug 1
 
 #if log
 #define LOG(fmt, ...) \
@@ -37,10 +38,14 @@ bool moveScreen = false;
 Pos camera;
 Pos mousePos;
 Pos exMousePose;
+Pos sortCamera;
 IPos exScreenPose;
 
 int nbPrintf = 0;
 int nbCollider = 0;
+
+MouseCollideBox * aBouger = NULL;
+MouseCollideBox * overedABouger = NULL;
 
 char text[256];
 
@@ -49,20 +54,25 @@ category * categories;
 
 color * noir;
 color * gris;
+color * grisClair;
 color * blanc;
 color * bleu;
 color * vert;
 color * rouge;
 
-#define nbColliderMax 63
+#define nbColliderMax 100
 MouseCollideBox * collideBoxSpells[nbColliderMax];
 Bouton * boutonSpellsCategory[6];
 Bouton * boutonSpellsNoeud[56];
+noeudModule * premierModule = NULL;
 
 int main(int argc, char ** argv) {
 	StartLog();
 	initBouton();
 	creatCategorie();
+
+	sortCamera.x = 0;
+	sortCamera.y = 0;
 
 	for (int i = 0; i < nbColliderMax; i++) {
 		collideBoxSpells[i] = NULL;
@@ -76,6 +86,7 @@ int main(int argc, char ** argv) {
 
         noir = NewColor(0, 0, 0, 255);
         gris = NewColor(100, 100, 100, 255);
+        grisClair = NewColor(150, 150, 150, 255);
         blanc = NewColor(200, 200, 200, 255);
         bleu = NewColor(0, 0, 200, 255);
         vert = NewColor(0, 200, 0, 255);
@@ -85,10 +96,13 @@ int main(int argc, char ** argv) {
 	int indexBouton = 0;
 	category * currentCategorie = categories;
 	while (currentCategorie != NULL) {
-		NewBouton(boutonSpellsCategory, 6, collideBoxSpells, 63, currentCategorie->name, 10, noir, blanc, vert, rouge, 10, x * 30 + 10, 120, 20, OveredBoutonCategorie, NotOveredBoutonCategorie, clickedBoutonCategorie, ReleaseBoutonCategorie, x, 0., 1.);
+		NewBouton(boutonSpellsCategory, 6, collideBoxSpells, nbColliderMax, currentCategorie->name, 10, noir, blanc, vert, rouge, 10, x * 30 + 10, 120, 20, OveredBoutonCategorie, NotOveredBoutonCategorie, clickedBoutonCategorie, ReleaseBoutonCategorie, x, 0., 1.);
+		nbCollider ++;
 		for (int j = 0; j < currentCategorie->nbElement; j++) {
-			NewBouton(boutonSpellsNoeud, 56, collideBoxSpells, 63, currentCategorie->elements[j]->name, 10, noir, blanc, vert, rouge, 20, (j + x) * 30 + 40, 120, 20, OveredNoeud, NotOveredNoeud, ClickedNoeud, ReleaseNoeud, j * 10 + x, 0., 1.);
+			NewBouton(boutonSpellsNoeud, 56, collideBoxSpells, nbColliderMax, currentCategorie->elements[j]->name, 10, noir, blanc, vert, rouge, 20, (j + x) * 30 + 40, 120, 20, OveredNoeud, NotOveredNoeud, ClickedNoeud, ReleaseNoeud, j * 10 + x, 0., 1.);
 			boutonSpellsNoeud[indexBouton]->Draw = false;
+			boutonSpellsNoeud[indexBouton]->collider.enabled = false;
+			nbCollider ++;
 			indexBouton ++;
 		}
 		x ++;
@@ -146,6 +160,10 @@ int main(int argc, char ** argv) {
 		if (moveScreen) {
 			exScreenPose.x = exScreenPose.x + (mousePos.x - exMousePose.x); exScreenPose.y = exScreenPose.y + (mousePos.y - exMousePose.y);
 			SDL_SetWindowPosition(windoweSpell->window, exScreenPose.x, exScreenPose.y);
+		} else if (aBouger != NULL) {
+			aBouger->start.x += (mousePos.x - exMousePose.x); aBouger->start.y += (mousePos.y - exMousePose.y);
+			aBouger->end.x += (mousePos.x - exMousePose.x); aBouger->end.y += (mousePos.y - exMousePose.y);
+			exMousePose.x = mousePos.x; exMousePose.y = mousePos.y;
 		}
         
         	while (SDL_PollEvent(&events)) {
@@ -173,7 +191,7 @@ int main(int argc, char ** argv) {
         		        mousePos.x = events.motion.x;
         		        mousePos.y = events.motion.y;
 				for (int i = 0; i < nbColliderMax; i++) {
-					if (collideBoxSpells[i] != NULL) {
+					if (collideBoxSpells[i] != NULL && collideBoxSpells[i]->enabled) {
 						if (collideBoxSpells[i]->start.x <= mousePos.x && collideBoxSpells[i]->end.x >= mousePos.x && collideBoxSpells[i]->start.y <= mousePos.y && collideBoxSpells[i]->end.y >= mousePos.y) {
 							if (!collideBoxSpells[i]->wasOver) {
 								collideBoxSpells[i]->wasOver = true;
@@ -195,12 +213,18 @@ int main(int argc, char ** argv) {
 				} else if (events.window.windowID == windoweSpell->id) {
 					if (events.button.button == 1) {
 						exMousePose = mousePos;
-						SDL_GetWindowPosition(windoweSpell->window, &exScreenPose.x, &exScreenPose.y);
-						moveScreen = true;
-						for (int i = 0; i < nbColliderMax; i++) {
-							if (collideBoxSpells[i] != NULL) {
-								if (collideBoxSpells[i]->wasOver) {
-									collideBoxSpells[i]->whenClick(collideBoxSpells[i]->ID);
+						if (overedABouger != NULL) {
+							aBouger = overedABouger;
+							exScreenPose.x = overedABouger->start.x;
+							exScreenPose.y = overedABouger->start.y;
+						} else {
+							SDL_GetWindowPosition(windoweSpell->window, &exScreenPose.x, &exScreenPose.y);
+							moveScreen = true;
+							for (int i = 0; i < nbColliderMax; i++) {
+								if (collideBoxSpells[i] != NULL && collideBoxSpells[i]->enabled) {
+									if (collideBoxSpells[i]->wasOver) {
+										collideBoxSpells[i]->whenClick(collideBoxSpells[i]->ID);
+									}
 								}
 							}
 						}
@@ -213,8 +237,9 @@ int main(int argc, char ** argv) {
 				} else if (events.window.windowID == windoweSpell->id) {
 					if (events.button.button == 1) {
 						moveScreen = false;
+						aBouger = NULL;
 						for (int i = 0; i < nbColliderMax; i++) {
-							if (collideBoxSpells[i] != NULL) {
+							if (collideBoxSpells[i] != NULL && collideBoxSpells[i]->enabled) {
 								if (collideBoxSpells[i]->wasOver) {
 									collideBoxSpells[i]->whenRelease(collideBoxSpells[i]->ID);
 								}
@@ -254,10 +279,155 @@ int main(int argc, char ** argv) {
 		}
 	}
 
+	noeudModule * current = premierModule;
+	noeudModule * next = NULL;
+	while (current != NULL) {
+		free(current->inputs);
+		free(current->outputs);
+		next = current->suivant;
+		free(current);
+		current = next;
+	}
+
 	freeCategory(categories);
         CloseWindows();
 	EndLog();
         return 0;
+}
+
+void NewNoeudUI(noeud * noeu) {
+	noeudModule * result = (noeudModule *) malloc(sizeof(noeudModule));
+	result->name.text = noeu->name;
+	result->name.size = 10;
+	result->name.color = noir;
+	result->name.angle = 0;
+	result->name.pos.x = 70;
+	result->name.pos.y = 10;
+	
+	unsigned char nbinputColor = (noeu->nbIn & 0b00000001);
+	unsigned char nbinputPosition = ((noeu->nbIn & 0b00000010) >> 1);
+	unsigned char nbinputFloat = ((noeu->nbIn & 0b00011100) >> 2);
+	unsigned char nbinputInt = (noeu->nbIn >> 5);
+	unsigned char nboutputColor = (noeu->nbout & 0b00000001);
+	unsigned char nboutputPosition = ((noeu->nbout & 0b00000010) >> 1);
+	unsigned char nboutputFloat = ((noeu->nbout & 0b00011100) >> 2);
+	unsigned char nboutputInt = (noeu->nbout >> 5);
+	unsigned char nbinput = nbinputColor + nbinputPosition + nbinputFloat + nbinputInt + 1;
+	unsigned char nboutput = nboutputColor + nboutputPosition + nboutputFloat + nboutputInt + 1;
+
+	result->collider.start.x = 0;
+	result->collider.start.y = 0;
+	result->collider.end.x = 260;
+	result->collider.end.y = 60 + SDL_max(nbinput, nboutput) * 25;
+	result->collider.ID = (uint64_t) &result->collider;
+	result->collider.wasOver = false;
+	result->collider.enabled = true;
+	result->collider.whenOver = OveredNoeudModule;
+	result->collider.whenNotOver = NotOveredNoeudModule;
+	result->collider.whenClick = ClickedNoeudModule;
+	result->collider.whenRelease = ReleaseNoeudModule;
+	collideBoxSpells[nbCollider] = &result->collider;
+	nbCollider ++;
+	result->nbIn = nbinput;
+	result->nbOut = nboutput;
+	result->inputs = (noeudModuleIn *) malloc(sizeof(noeudModuleIn) * nbinput);
+	for (int i = 0; i < nbinputInt; i++) {
+		result->inputs[i].name.text = noeu->input[i];
+		result->inputs[i].name.size = 10;
+		result->inputs[i].name.color = noir;
+		result->inputs[i].name.angle = 0;
+		result->inputs[i].name.pos.x = 5;
+		result->inputs[i].name.pos.y = 50 + i * 25;
+		result->inputs[i].type = INT;
+		result->inputs[i].nbout = 0;
+	}
+	for (int i = nbinputInt; i < nbinputFloat + nbinputInt; i++) {
+		result->inputs[i].name.text = noeu->input[i];
+		result->inputs[i].name.size = 10;
+		result->inputs[i].name.color = noir;
+		result->inputs[i].name.angle = 0;
+		result->inputs[i].name.pos.x = 5;
+		result->inputs[i].name.pos.y = 50 + (i + nbinputInt) * 25;
+		result->inputs[i].type = FLOAT;
+		result->inputs[i].nbout = 0;
+	}
+	for (int i = nbinputInt + nbinputFloat; i < nbinputFloat + nbinputInt + nbinputPosition; i++) {
+		result->inputs[i].name.text = noeu->input[i];
+		result->inputs[i].name.size = 10;
+		result->inputs[i].name.color = noir;
+		result->inputs[i].name.angle = 0;
+		result->inputs[i].name.pos.x = 5;
+		result->inputs[i].name.pos.y = 50 + (i + nbinputInt + nbinputFloat) * 25;
+		result->inputs[i].type = POSITION;
+		result->inputs[i].nbout = 0;
+	}
+	for (int i = nbinputInt + nbinputFloat + nbinputPosition; i < nbinputFloat + nbinputInt + nbinputPosition + nbinputColor; i++) {
+		result->inputs[i].name.text = noeu->input[i];
+		result->inputs[i].name.size = 10;
+		result->inputs[i].name.color = noir;
+		result->inputs[i].name.angle = 0;
+		result->inputs[i].name.pos.x = 5;
+		result->inputs[i].name.pos.y = 50 + (i + nbinputInt + nbinputFloat + nbinputPosition) * 25;
+		result->inputs[i].type = COLOR;
+		result->inputs[i].nbout = 0;
+	}
+	result->inputs[nbinput - 1].name.text = "Activer        \0";
+	result->inputs[nbinput - 1].name.size = 10;
+	result->inputs[nbinput - 1].name.color = noir;
+	result->inputs[nbinput - 1].name.angle = 0;
+	result->inputs[nbinput - 1].name.pos.x = 5;
+	result->inputs[nbinput - 1].name.pos.y = 25 + (nbinput) * 25;
+	result->inputs[nbinput - 1].type = BOOL;
+	result->inputs[nbinput - 1].nbout = 0;
+	result->outputs = (noeudModuleOut *) malloc(sizeof(noeudModuleOut) * nboutput);
+	for (int i = 0; i < nboutputInt; i++) {
+		result->outputs[i].name.text = noeu->output[i];
+		result->outputs[i].name.size = 10;
+		result->outputs[i].name.color = noir;
+		result->outputs[i].name.angle = 0;
+		result->outputs[i].name.pos.x = 135;
+		result->outputs[i].name.pos.y = 50 + i * 25;
+	}
+	for (int i = nboutputInt; i < nboutputFloat + nboutputInt; i++) {
+		result->outputs[i].name.text = noeu->output[i];
+		result->outputs[i].name.size = 10;
+		result->outputs[i].name.color = noir;
+		result->outputs[i].name.angle = 0;
+		result->outputs[i].name.pos.x = 135;
+		result->outputs[i].name.pos.y = 50 + (i + nboutputInt) * 25;
+	}
+	for (int i = nboutputInt + nboutputFloat; i < nboutputFloat + nboutputInt + nboutputPosition; i++) {
+		result->outputs[i].name.text = noeu->output[i];
+		result->outputs[i].name.size = 10;
+		result->outputs[i].name.color = noir;
+		result->outputs[i].name.angle = 0;
+		result->outputs[i].name.pos.x = 135;
+		result->outputs[i].name.pos.y = 50 + (i + nboutputInt + nboutputFloat) * 25;
+	}
+	for (int i = nboutputInt + nboutputFloat + nboutputPosition; i < nboutputFloat + nboutputInt + nboutputPosition + nboutputColor; i++) {
+		result->outputs[i].name.text = noeu->output[i];
+		result->outputs[i].name.size = 10;
+		result->outputs[i].name.color = noir;
+		result->outputs[i].name.angle = 0;
+		result->outputs[i].name.pos.x = 135;
+		result->outputs[i].name.pos.y = 50 + (i + nboutputInt + nboutputFloat + nboutputPosition) * 25;
+	}
+	result->outputs[nboutput - 1].name.text = "Activer        \0";
+	result->outputs[nboutput - 1].name.size = 10;
+	result->outputs[nboutput - 1].name.color = noir;
+	result->outputs[nboutput - 1].name.angle = 0;
+	result->outputs[nboutput - 1].name.pos.x = 135;
+	result->outputs[nboutput - 1].name.pos.y = 25 + (nboutput) * 25;
+	result->suivant = NULL;
+	if (premierModule == NULL) {
+		premierModule = result;
+	} else {
+		noeudModule * current = premierModule;
+		while (current->suivant != NULL) {
+			current = current->suivant;
+		}
+		current->suivant = result;
+	}
 }
 
 void creatCategorie() {
@@ -327,8 +497,31 @@ void creatCategorie() {
 }
 
 void draw() {
-	ChangeColorC(windoweSpell, gris);
+	noeudModule * current = premierModule;
+	while (current != NULL) {
+		ChangeColorC(windoweSpell, gris);
+		DrawRectangle(windoweSpell, current->collider.start.x, current->collider.start.y, current->collider.end.x, current->collider.end.y, true, 0);
+		ChangeColorC(windoweSpell, grisClair);
+		DrawRectangle(windoweSpell, current->name.pos.x + current->collider.start.x - 10, current->name.pos.y + current->collider.start.y, current->name.pos.x + current->collider.start.x + 140, current->name.pos.y + current->collider.start.y + 20, true, 0);
+		ChangeColorC(windoweSpell, current->name.color);
+		DrawString(windoweSpell, current->name.pos.x + current->collider.start.x, current->name.pos.y + current->collider.start.y, current->name.text);
+		for (int i = 0; i < current->nbIn; i++) {
+			ChangeColorC(windoweSpell, grisClair);
+			DrawRectangle(windoweSpell, current->inputs[i].name.pos.x + current->collider.start.x, current->inputs[i].name.pos.y + current->collider.start.y - 2, 120 + current->inputs[i].name.pos.x + current->collider.start.x, 20 + current->inputs[i].name.pos.y + current->collider.start.y, true, 0);
+			ChangeColorC(windoweSpell, current->inputs[i].name.color);
+			DrawString(windoweSpell, current->inputs[i].name.pos.x + current->collider.start.x, current->inputs[i].name.pos.y + current->collider.start.y, current->inputs[i].name.text);
+		}
+		for (int i = 0; i < current->nbOut; i++) {
+			ChangeColorC(windoweSpell, grisClair);
+			DrawRectangle(windoweSpell, current->outputs[i].name.pos.x + current->collider.start.x, current->outputs[i].name.pos.y + current->collider.start.y - 2, 120 + current->outputs[i].name.pos.x + current->collider.start.x, 20 + current->outputs[i].name.pos.y + current->collider.start.y, true, 0);
+			ChangeColorC(windoweSpell, current->outputs[i].name.color);
+			DrawString(windoweSpell, current->outputs[i].name.pos.x + current->collider.start.x, current->outputs[i].name.pos.y + current->collider.start.y, current->outputs[i].name.text);
+		}
 
+		current = current->suivant;
+	}
+
+	ChangeColorC(windoweSpell, gris);
 	DrawRectangle(windoweSpell, 0, 0, 150, 1080, true, 0);
 
 	for (int i = 0; i < 56; i++) {
@@ -351,8 +544,8 @@ void draw() {
 
         #if debug
         ChangeColorC(windoweSpell, rouge);
-        for (int i = 0; i < 63; i++) {
-            if (collideBoxSpells[i] != NULL) {
+        for (int i = 0; i < nbColliderMax; i++) {
+            if (collideBoxSpells[i] != NULL && collideBoxSpells[i]->enabled) {
                 DrawRectangle(windoweSpell, collideBoxSpells[i]->start.x, collideBoxSpells[i]->start.y, collideBoxSpells[i]->end.x, collideBoxSpells[i]->end.y, false, 0);
             }
         }
@@ -365,7 +558,7 @@ void draw() {
 	RenderPresent(windoweSpell);
 }
 
-void clickedBoutonCategorie(int ID) {
+void clickedBoutonCategorie(uint64_t ID) {
 	menuSelect = (CategoryType) ID;
 	category * currentCategorie = categories;
 	int index = 0;
@@ -378,8 +571,10 @@ void clickedBoutonCategorie(int ID) {
 	for (int i = 0; i < 56; i++) {
 		if (currentCategorie->nbElement + index > i && index <= i) {
 			boutonSpellsNoeud[i]->Draw = true;
+			boutonSpellsNoeud[i]->collider.enabled = true;
 		} else {
 			boutonSpellsNoeud[i]->Draw = false;
+			boutonSpellsNoeud[i]->collider.enabled = false;
 		}
 	}
 	boutonSpellsCategory[ID]->colorUse = *boutonSpellsCategory[ID]->clicked;
@@ -398,23 +593,31 @@ void clickedBoutonCategorie(int ID) {
 	}
 }
 
-void ReleaseBoutonCategorie(int ID) {
+void ReleaseBoutonCategorie(uint64_t ID) {
 	boutonSpellsCategory[ID]->colorUse = *boutonSpellsCategory[ID]->over;
 }
 
-void OveredBoutonCategorie(int ID) {
+void OveredBoutonCategorie(uint64_t ID) {
 	boutonSpellsCategory[ID]->colorUse = *boutonSpellsCategory[ID]->over;
 }
 
-void NotOveredBoutonCategorie(int ID) {
+void NotOveredBoutonCategorie(uint64_t ID) {
 	boutonSpellsCategory[ID]->colorUse = *boutonSpellsCategory[ID]->normal;
 }
 
-void ClickedNoeud(int ID) {
-	printf("Clicked ID = %d\n", ID);
+void ClickedNoeud(uint64_t ID) {
+	category * currentCategorie = categories;
+	int index = ID / 10;
+	for (int i = 0; i < ID % 10; i++) {
+		index += currentCategorie->nbElement;
+		currentCategorie = currentCategorie->suivant;
+	}
+	if (boutonSpellsNoeud[index]->Draw) {
+		NewNoeudUI(currentCategorie->elements[ID / 10]);
+	}
 }
 
-void ReleaseNoeud(int ID) {
+void ReleaseNoeud(uint64_t ID) {
 	category * currentCategorie = categories;
 	int index = ID / 10;
 	for (int i = 0; i < ID % 10; i++) {
@@ -424,7 +627,7 @@ void ReleaseNoeud(int ID) {
 	boutonSpellsNoeud[index]->colorUse = *boutonSpellsNoeud[index]->over;
 }
 
-void OveredNoeud(int ID) {
+void OveredNoeud(uint64_t ID) {
 	category * currentCategorie = categories;
 	int index = ID / 10;
 	for (int i = 0; i < ID % 10; i++) {
@@ -434,7 +637,7 @@ void OveredNoeud(int ID) {
 	boutonSpellsNoeud[index]->colorUse = *boutonSpellsNoeud[index]->over;
 }
 
-void NotOveredNoeud(int ID) {
+void NotOveredNoeud(uint64_t ID) {
 	category * currentCategorie = categories;
 	int index = ID / 10;
 	for (int i = 0; i < ID % 10; i++) {
@@ -444,19 +647,37 @@ void NotOveredNoeud(int ID) {
 	boutonSpellsNoeud[index]->colorUse = *boutonSpellsNoeud[index]->normal;
 }
 
-void Clicked(int ID) {
+void ClickedNoeudModule(uint64_t ID) {
 	printf("Clicked ID = %d\n", ID);
 }
 
-void Release(int ID) {
+void ReleaseNoeudModule(uint64_t ID) {
 	printf("Release ID = %d\n", ID);
 }
 
-void Overed(int ID) {
+void OveredNoeudModule(uint64_t ID) {
+	overedABouger = (MouseCollideBox *) ID;
+}
+
+void NotOveredNoeudModule(uint64_t ID) {
+	if (overedABouger == (MouseCollideBox *) ID) {
+		overedABouger = NULL;
+	}
+}
+
+void Clicked(uint64_t ID) {
+	printf("Clicked ID = %d\n", ID);
+}
+
+void Release(uint64_t ID) {
+	printf("Release ID = %d\n", ID);
+}
+
+void Overed(uint64_t ID) {
 	printf("Over ID = %d\n", ID);
 }
 
-void NotOvered(int ID) {
+void NotOvered(uint64_t ID) {
 	printf("NotOver ID = %d\n", ID);
 }
 

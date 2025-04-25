@@ -11,7 +11,7 @@ void initBouton() {
     }
 }
 
-Bouton * NewBouton(Bouton * BoutonArray[], int nbBoutoninArray, MouseCollideBox * ColliderArray[], int nbColliderinArray, char * text, int TextSize, color * TextColor, color * normalColor, color * overColor, color * clickedColor, float x, float y, float w, float h, void (*whenOver)(int ID), void (*whenNotOver)(int ID), void (*whenClick)(int ID), void (*whenRelease)(int ID), int ID, float animMin, float animMax) {
+Bouton * NewBouton(Bouton * BoutonArray[], int nbBoutoninArray, MouseCollideBox * ColliderArray[], int nbColliderinArray, char * text, int TextSize, color * TextColor, color * normalColor, color * overColor, color * clickedColor, float x, float y, float w, float h, void (*whenOver)(uint64_t ID), void (*whenNotOver)(uint64_t ID), void (*whenClick)(uint64_t ID), void (*whenRelease)(uint64_t ID), uint64_t ID, float animMin, float animMax) {
     Bouton * result = (Bouton *) malloc(sizeof(Bouton));
 
 	result->collider.start.x = x;
@@ -24,6 +24,7 @@ Bouton * NewBouton(Bouton * BoutonArray[], int nbBoutoninArray, MouseCollideBox 
 	result->collider.whenRelease = whenRelease;
 	result->collider.whenClick = whenClick;
 	result->collider.ID = ID;
+	result->collider.enabled = true;
 
     result->text.text = text;
     result->text.size = TextSize;
@@ -72,7 +73,7 @@ float calculi(float a, float min, float max) {
     return (a - min) / (max - min);
 }
 
-MouseCollideBox * newCollideBox(MouseCollideBox * ColliderArray[], int nbColliderinArray, float x, float y, float w, float h, void (*whenOver)(int ID), void (*whenNotOver)(int ID), void (*whenClick)(int ID), void (*whenRelease)(int ID), int ID) {
+MouseCollideBox * newCollideBox(MouseCollideBox * ColliderArray[], int nbColliderinArray, float x, float y, float w, float h, void (*whenOver)(uint64_t ID), void (*whenNotOver)(uint64_t ID), void (*whenClick)(uint64_t ID), void (*whenRelease)(uint64_t ID), uint64_t ID) {
 	MouseCollideBox * result = (MouseCollideBox *) malloc(sizeof(MouseCollideBox));
 	result->start.x = x;
 	result->start.y = y;

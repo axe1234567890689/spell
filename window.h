@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 typedef enum typ {
-        COLOR,
+        WIN_COLOR,
         GRADIANT,
         WINDOW
 } typ;

@@ -4,6 +4,13 @@
 #include "window.h"
 
 typedef struct Pos Pos;
+typedef struct Text Text;
+typedef struct Bouton Bouton;
+typedef struct Animation Animation;
+typedef struct AnimModule AnimModule;
+typedef struct MouseCollideBox MouseCollideBox;
+typedef enum VarType VarType;
+
 typedef struct IPos IPos;
 typedef struct noeud noeud;
 typedef struct category category;
@@ -12,16 +19,9 @@ typedef struct team team;
 typedef struct SortLinked SortLinked;
 typedef struct PlayerLinked PlayerLinked;
 typedef struct Sort Sort;
-
-typedef enum {
-        CONSTANT,
-        DECLENCHEUR,
-        CONDITION,
-        INPUT,
-        TRANSFORM,
-        EFFET,
-        AUCUN
-} CategoryType;
+typedef struct noeudModule noeudModule;
+typedef struct noeudModuleIn noeudModuleIn;
+typedef struct noeudModuleOut noeudModuleOut;
 
 typedef struct Pos {
         float x;
@@ -32,21 +32,6 @@ typedef struct IPos {
         int x;
         int y;
 } IPos;
-
-typedef struct noeud{
-        char name[16];
-        unsigned char nbIn;
-        unsigned char nbout;
-        char ** input;
-        char ** output;
-} noeud;
-
-typedef struct category {
-        char name[16];
-        uint32_t nbElement;
-        struct category * suivant;
-        noeud * elements[];
-} category;
 
 typedef struct Player {
         int vie;
@@ -91,9 +76,6 @@ typedef struct Sort {
         PlayerLinked ** playerAround;
 } Sort;
 
-noeud * NewNoeud(const char name[16], unsigned char nbIn, unsigned char nbout, ...);
-category * NewCategory(const char name[16], Uint32 nbElement, noeud * Elements[]);
-
 void draw();
 void freeNoeud(noeud * noeuds);
 void freeCategory(category * categories);
@@ -101,18 +83,22 @@ void printCategorie(category * categories);
 void printNoeud(noeud * current);
 void creatCategorie();
 
-void Overed(int ID);
-void NotOvered(int ID);
-void Clicked(int ID);
-void Release(int ID);
-void OveredNoeud(int ID);
-void NotOveredNoeud(int ID);
-void ClickedNoeud(int ID);
-void ReleaseNoeud(int ID);
-void clickedBoutonCategorie(int ID);
-void ReleaseBoutonCategorie(int ID);
-void OveredBoutonCategorie(int ID);
-void NotOveredBoutonCategorie(int ID);
+void Overed(uint64_t ID);
+void NotOvered(uint64_t ID);
+void Clicked(uint64_t ID);
+void Release(uint64_t ID);
+void OveredNoeud(uint64_t ID);
+void NotOveredNoeud(uint64_t ID);
+void ClickedNoeud(uint64_t ID);
+void ReleaseNoeud(uint64_t ID);
+void ClickedNoeudModule(uint64_t ID);
+void ReleaseNoeudModule(uint64_t ID);
+void OveredNoeudModule(uint64_t ID);
+void NotOveredNoeudModule(uint64_t ID);
+void clickedBoutonCategorie(uint64_t ID);
+void ReleaseBoutonCategorie(uint64_t ID);
+void OveredBoutonCategorie(uint64_t ID);
+void NotOveredBoutonCategorie(uint64_t ID);
 
 void printff(const char * text);
 void logstr(const char * text);
